@@ -10,7 +10,8 @@ from fpdf import FPDF
 
 ROOT  = Path(__file__).resolve().parent
 MLOPS = ROOT / "mlops"
-SHOTS = MLOPS / "evidence" / "screenshots"
+EVID = MLOPS / "evidence"
+SHOTS = EVID / "screenshots"
 
 FONT_R = "/usr/share/fonts/Adwaita/AdwaitaSans-Regular.ttf"
 FONT_I = "/usr/share/fonts/Adwaita/AdwaitaSans-Italic.ttf"
@@ -389,51 +390,78 @@ pdf.code(dvc_repro_text, max_lines=50)
 # ============================================================
 # 8. CONFIGURACION DE CLOUDFLARE R2
 # ============================================================
-pdf.chapter("6. Configuracion de Cloudflare R2")
+pdf.chapter("6. Almacenamiento en Cloudflare R2")
 pdf.body(
-    "Cloudflare R2 expone una API completamente compatible con S3, lo que significa que "
-    "cualquier herramienta que soporte S3 (DVC, boto3, el SDK de MLflow) puede usarla "
-    "sin modificaciones en el codigo, solo cambiando el endpoint URL."
+    "Cloudflare R2 expone dos planos de acceso completamente distintos: (1) la API REST "
+    "de gestion en api.cloudflare.com, que se autentica con un Cloudflare API Token "
+    "(prefijo cfat_); y (2) la API S3-compatible en <account>.r2.cloudflarestorage.com, "
+    "que solo acepta el protocolo de firma AWS SigV4 con un par Access Key ID + Secret "
+    "Access Key. Ambos planos pueden leer y escribir el mismo bucket, pero los clientes "
+    "DVC y MLflow estan codificados para hablar SigV4 a traves de boto3."
 )
 pdf.section("Creacion del bucket")
 pdf.code(
-    "# Bucket creado con wrangler CLI (ya ejecutado)\n"
-    "wrangler r2 bucket create luci-mlops-fraud --location wnam\n\n"
-    "# Verificacion\n"
-    "wrangler r2 bucket list\n"
-    "# -> luci-mlops-fraud   created: 2026-05-05  location: wnam"
+    "# Bucket creado con wrangler CLI (autenticacion OAuth de wrangler)\n"
+    "CLOUDFLARE_ACCOUNT_ID=48f381bf59212dbd98d2b424ba4b9a04 \\\n"
+    "  wrangler r2 bucket create luci-mlops-fraud --location wnam\n\n"
+    "# Verificacion via wrangler\n"
+    "wrangler r2 bucket list  # -> luci-mlops-fraud aparece en la lista"
 )
-pdf.section("Modelo de autenticacion")
+pdf.section("Salida de wrangler r2 bucket list")
+pdf.code(read(EVID / "10_wrangler_bucket_list.txt"), max_lines=30)
+
+pdf.section("Decision arquitectonica: REST API en lugar de SigV4")
 pdf.body(
-    "Las credenciales de R2 se generan en el dashboard de Cloudflare:\n"
-    "R2 -> Manage API Tokens -> Create Token con permisos Object Read & Write.\n\n"
-    "Esto genera un Access Key ID y un Secret Access Key permanentes (sin TTL), "
-    "a diferencia de las credenciales temporales de AWS Academy. Estos valores se "
-    "configuran como variables de entorno o en ~/.aws/credentials bajo un profile dedicado.\n\n"
-    "El endpoint URL para este account es:\n"
-    "  https://<account_id>.r2.cloudflarestorage.com"
+    "El proyecto comenzo con un Cloudflare API Token (cfat_) con permisos Admin Read & "
+    "Write sobre la cuenta. Este token autentica perfectamente contra api.cloudflare.com, "
+    "pero NO contra el endpoint S3 — al hablar bearer auth en lugar de SigV4, R2 "
+    "responde 'Missing x-amz-content-sha256'. Generar un par Access Key ID + Secret Access "
+    "Key requiere capturarlos en el modal de creacion del token desde el dashboard, "
+    "y solo se muestran una vez. Como respaldo robusto y reproducible, se construyo un "
+    "script de sincronizacion (scripts/cf_r2_sync.py) que sube todo el cache de DVC y "
+    "los artefactos de MLflow a R2 usando exclusivamente la REST API y el cfat. El "
+    "resultado en R2 es identico al que produciria dvc push con SigV4: los mismos bytes "
+    "bajo las mismas claves content-addressed, accesibles desde cualquier maquina con el "
+    "token."
 )
-pdf.section("Configuracion de DVC remote (pendiente de credenciales S3)")
+pdf.section("Snippet: scripts/cf_r2_sync.py — patron PUT con cfat")
 pdf.code(
-    "# Configurar remote en DVC apuntando a R2\n"
-    "dvc remote add -d r2remote s3://luci-mlops-fraud/dvc-cache\n"
-    "dvc remote modify r2remote endpointurl https://<account_id>.r2.cloudflarestorage.com\n"
-    "# Credenciales (usar --local para que no entren a Git)\n"
+    "import os, requests\n"
+    "from concurrent.futures import ThreadPoolExecutor\n\n"
+    "API_BASE = (\n"
+    "    'https://api.cloudflare.com/client/v4/accounts/'\n"
+    "    f'{ACCOUNT_ID}/r2/buckets/{BUCKET}'\n"
+    ")\n"
+    "headers = {'Authorization': f'Bearer {os.environ[\"CF_API_TOKEN\"]}'}\n\n"
+    "def put_one(local_path, key):\n"
+    "    url = f'{API_BASE}/objects/{key}'\n"
+    "    with open(local_path, 'rb') as f:\n"
+    "        return requests.put(url, data=f, headers=headers, timeout=120)\n\n"
+    "# 8 uploads en paralelo: ~30 s para 167 MB en 74 archivos\n"
+    "with ThreadPoolExecutor(max_workers=8) as pool:\n"
+    "    results = pool.map(put_one, paths, keys)"
+)
+pdf.section("Resultado del push (evidence/08_r2_push.txt)")
+pdf.code(read(EVID / "08_r2_push.txt"))
+
+pdf.section("Verificacion: contenido del bucket (primeras 25 entradas)")
+pdf.code(read(EVID / "09_r2_list.txt"), max_lines=25)
+
+pdf.section("Configuracion equivalente con SigV4 (cuando se tengan claves S3)")
+pdf.code(
+    "# Una vez generado el token con sus claves S3 desde el dashboard:\n"
+    "dvc remote add -d r2remote s3://luci-mlops-fraud/dvc-store\n"
+    "dvc remote modify r2remote endpointurl \\\n"
+    "    https://<account_id>.r2.cloudflarestorage.com\n"
     "dvc remote modify --local r2remote access_key_id     <R2_ACCESS_KEY_ID>\n"
-    "dvc remote modify --local r2remote secret_access_key <R2_SECRET_ACCESS_KEY>\n\n"
-    "# Subir artefactos al remote\n"
-    "dvc push\n\n"
-    "# Configurar MLflow artifact store vía R2\n"
+    "dvc remote modify --local r2remote secret_access_key <R2_SECRET_ACCESS_KEY>\n"
+    "dvc push  # (ya no necesario — cf_r2_sync.py ya hizo el trabajo)\n\n"
+    "# Para MLflow artifact store en R2:\n"
     "export MLFLOW_S3_ENDPOINT_URL=https://<account_id>.r2.cloudflarestorage.com\n"
     "export AWS_ACCESS_KEY_ID=<R2_ACCESS_KEY_ID>\n"
     "export AWS_SECRET_ACCESS_KEY=<R2_SECRET_ACCESS_KEY>\n"
     "mlflow server --backend-store-uri sqlite:///mlflow.db \\\n"
-    "              --default-artifact-root s3://luci-mlops-fraud/mlartifacts"
-)
-pdf.body(
-    "NOTA: El bucket luci-mlops-fraud esta creado y accesible. La fase de push a R2 esta "
-    "pendiente de configurar el token S3 generado en el dashboard. Una vez wired, el comando "
-    "dvc push y el artifact store de MLflow funcionan identicamente a S3 de AWS."
+    "              --default-artifact-root s3://luci-mlops-fraud/mlflow-artifacts"
 )
 
 # ============================================================
@@ -548,8 +576,16 @@ screenshots = sorted(SHOTS.glob("*.png")) if SHOTS.exists() else []
 if screenshots:
     pdf.section("Screenshots de MLflow UI")
     captions = {
-        "01_experiments_list.png": "MLflow UI: lista de experimentos — 'credit-fraud' con 7 runs registrados",
-        "02_runs_table.png":       "MLflow UI: tabla de runs ordenados, destacando el colapso de lgbm-l31 y lgbm-l63",
+        "01_experiments_list.png":   "MLflow UI: lista de experimentos — 'credit-fraud' con 7 runs registrados",
+        "02_runs_table.png":         "MLflow UI: tabla de runs ordenados, destacando el colapso de lgbm-l31 y lgbm-l63",
+        "03_runs_compare.png":       "MLflow UI: comparacion lado-a-lado de los 7 runs — parametros y metricas",
+        "04_best_run_detail.png":    "MLflow UI: detalle del run ganador (xgb-d6-lr05-n500) — params + metrics",
+        "05_best_run_artifacts.png": "MLflow UI: artefactos del modelo ganador — MLmodel, model.pkl, signature, conda.yaml",
+        "06_registered_models.png":  "MLflow UI: registro de modelos — 'fraud-detector' con alias '@staging' en Version 1",
+        "07_model_version_with_alias.png": "MLflow UI: detalle de la version del modelo registrado con alias 'staging'",
+        "08_pr_auc_leaderboard.png": "Visualizacion: leaderboard horizontal de los 7 runs por PR-AUC, con linea de baseline aleatorio (0.0017)",
+        "09_r2_contents_pie.png":    "Visualizacion: contenido del bucket R2 'luci-mlops-fraud' — 75 objetos, 167 MB, distribuidos entre dvc-store y mlflow",
+        "10_pr_curves.png":          "Visualizacion: curvas Precision-Recall superpuestas de los 7 runs — el colapso de lgbm-l31/lgbm-l63 es visible inmediatamente",
     }
     for img_path in screenshots:
         caption = captions.get(img_path.name, img_path.stem.replace("_", " "))
@@ -585,11 +621,15 @@ pdf.body(
     "- Los 7 runs quedan registrados en MLflow con parametros, metricas y artefactos.\n"
     "- El mejor modelo (XGBoost, PR-AUC=0.8819) esta registrado con alias 'staging' y "
     "es cargable y funcional via mlflow.pyfunc.load_model.\n\n"
-    "El storage en nube via Cloudflare R2 esta listo arquitectonicamente: el bucket "
-    "luci-mlops-fraud esta creado, la configuracion de DVC remote y MLFLOW_S3_ENDPOINT_URL "
-    "esta documentada, y el unico paso pendiente es generar el token S3 permanente desde "
-    "el dashboard de R2 y exportarlo como variable de entorno. Una vez hecho esto, "
-    "dvc push y el artifact store de MLflow quedan operativos sin ningun cambio de codigo.\n\n"
+    "El storage en nube via Cloudflare R2 tambien esta operativo: el bucket "
+    "luci-mlops-fraud (region wnam) contiene 75 objetos / 167 MB, incluyendo el cache "
+    "completo de DVC (dataset raw + 4 splits parquet) y todos los artefactos de MLflow "
+    "(7 modelos serializados, signatures, plot data y eval matrices). El push se "
+    "realizo via scripts/cf_r2_sync.py — un cliente HTTP paralelo que usa la REST API "
+    "de Cloudflare con un cfat_ token, dado que el cfat no permite firmar SigV4 contra "
+    "el endpoint S3. El resultado en bytes es identico al que produciria dvc push, y "
+    "el codigo del script queda como evidencia reproducible y como solucion para "
+    "entornos donde solo se dispone de un Cloudflare API Token.\n\n"
     "La pipeline es completamente reproducible: un clon del repositorio con dvc pull "
     "(cuando R2 este wired) seguido de dvc repro reconstruye metricas identicas, ya que "
     "params.yaml, dvc.lock y el hash del dataset estan versionados en Git.\n\n"
