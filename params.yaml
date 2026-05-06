@@ -1,0 +1,85 @@
+# params.yaml — Pipeline configuration for DVC + MLflow fraud detection demo.
+# No random_forest configs — only LogReg, XGBoost (3), LightGBM (3).
+
+mlflow:
+  tracking_uri: "sqlite:///mlflow.db"
+
+data:
+  openml_dataset_id: 1597        # creditcard fraud dataset
+  raw_file: data/raw/creditcard.parquet
+
+preprocessing:
+  test_size: 0.20
+  random_state: 42
+  drop_columns: ["Time"]         # Time is weakly informative; dropped before split
+
+models:
+
+  logreg:
+    run_name: logreg-baseline
+    C: 0.1
+    solver: lbfgs
+    class_weight: balanced
+    max_iter: 1000
+
+  xgboost_runs:
+    - run_name: xgb-d4-lr10-n300
+      max_depth: 4
+      learning_rate: 0.1
+      n_estimators: 300
+      objective: "binary:logistic"
+      eval_metric: aucpr
+      subsample: 0.8
+      colsample_bytree: 0.8
+
+    - run_name: xgb-d6-lr05-n500
+      max_depth: 6
+      learning_rate: 0.05
+      n_estimators: 500
+      objective: "binary:logistic"
+      eval_metric: aucpr
+      subsample: 0.8
+      colsample_bytree: 0.8
+
+    - run_name: xgb-d8-lr01-n1000
+      max_depth: 8
+      learning_rate: 0.01
+      n_estimators: 1000
+      objective: "binary:logistic"
+      eval_metric: aucpr
+      subsample: 0.8
+      colsample_bytree: 0.8
+
+  lightgbm_runs:
+    - run_name: lgbm-l31-lr10-n300-isunb
+      num_leaves: 31
+      learning_rate: 0.1
+      n_estimators: 300
+      is_unbalance: true
+      objective: binary
+      metric: average_precision
+      min_child_samples: 20
+      subsample: 0.8
+      colsample_bytree: 0.8
+
+    - run_name: lgbm-l63-lr05-n500-spw
+      num_leaves: 63
+      learning_rate: 0.05
+      n_estimators: 500
+      is_unbalance: false         # uses scale_pos_weight (ratio neg/pos) instead
+      objective: binary
+      metric: average_precision
+      min_child_samples: 20
+      subsample: 0.8
+      colsample_bytree: 0.8
+
+    - run_name: lgbm-l127-lr01-n1000-isunb
+      num_leaves: 127
+      learning_rate: 0.01
+      n_estimators: 1000
+      is_unbalance: true
+      objective: binary
+      metric: average_precision
+      min_child_samples: 20
+      subsample: 0.8
+      colsample_bytree: 0.8

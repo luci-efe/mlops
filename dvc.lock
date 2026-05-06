@@ -1,0 +1,179 @@
+schema: '2.0'
+stages:
+  pull_raw:
+    cmd: python src/data.py pull
+    deps:
+    - path: src/data.py
+      hash: md5
+      md5: 7eca6548de10910a2779654f26db91b2
+      size: 4412
+    params:
+      params.yaml:
+        data.openml_dataset_id: 1597
+    outs:
+    - path: data/raw/creditcard.parquet
+      hash: md5
+      md5: 3fd3ce01b29d7b8e4373f6ea731b2801
+      size: 72122928
+  preprocess:
+    cmd: python src/data.py preprocess
+    deps:
+    - path: data/raw/creditcard.parquet
+      hash: md5
+      md5: 3fd3ce01b29d7b8e4373f6ea731b2801
+      size: 72122928
+    - path: src/data.py
+      hash: md5
+      md5: 7eca6548de10910a2779654f26db91b2
+      size: 4412
+    params:
+      params.yaml:
+        preprocessing:
+          test_size: 0.2
+          random_state: 42
+          drop_columns:
+          - Time
+    outs:
+    - path: data/processed/X_test.parquet
+      hash: md5
+      md5: 193ebb120b3b1634c552652cc80679cd
+      size: 15981929
+    - path: data/processed/X_train.parquet
+      hash: md5
+      md5: a08bf139c8c9879961660deb225477b4
+      size: 59468503
+    - path: data/processed/y_test.parquet
+      hash: md5
+      md5: 188166a7bfdabc81adee49efd975d44a
+      size: 1577
+    - path: data/processed/y_train.parquet
+      hash: md5
+      md5: b5276ab4cde84df46e09303551f20f8b
+      size: 2649
+  train:
+    cmd: python src/train_all.py
+    deps:
+    - path: data/processed/X_test.parquet
+      hash: md5
+      md5: 193ebb120b3b1634c552652cc80679cd
+      size: 15981929
+    - path: data/processed/X_train.parquet
+      hash: md5
+      md5: a08bf139c8c9879961660deb225477b4
+      size: 59468503
+    - path: data/processed/y_test.parquet
+      hash: md5
+      md5: 188166a7bfdabc81adee49efd975d44a
+      size: 1577
+    - path: data/processed/y_train.parquet
+      hash: md5
+      md5: b5276ab4cde84df46e09303551f20f8b
+      size: 2649
+    - path: src/train.py
+      hash: md5
+      md5: f36094789b37b613725c29e14df5a1dc
+      size: 14014
+    - path: src/train_all.py
+      hash: md5
+      md5: ddbcf76eeb471d3d5ec4257c8b2c0d1f
+      size: 5259
+    params:
+      params.yaml:
+        mlflow:
+          tracking_uri: sqlite:///mlflow.db
+        models:
+          logreg:
+            run_name: logreg-baseline
+            C: 0.1
+            solver: lbfgs
+            class_weight: balanced
+            max_iter: 1000
+          xgboost_runs:
+          - run_name: xgb-d4-lr10-n300
+            max_depth: 4
+            learning_rate: 0.1
+            n_estimators: 300
+            objective: binary:logistic
+            eval_metric: aucpr
+            subsample: 0.8
+            colsample_bytree: 0.8
+          - run_name: xgb-d6-lr05-n500
+            max_depth: 6
+            learning_rate: 0.05
+            n_estimators: 500
+            objective: binary:logistic
+            eval_metric: aucpr
+            subsample: 0.8
+            colsample_bytree: 0.8
+          - run_name: xgb-d8-lr01-n1000
+            max_depth: 8
+            learning_rate: 0.01
+            n_estimators: 1000
+            objective: binary:logistic
+            eval_metric: aucpr
+            subsample: 0.8
+            colsample_bytree: 0.8
+          lightgbm_runs:
+          - run_name: lgbm-l31-lr10-n300-isunb
+            num_leaves: 31
+            learning_rate: 0.1
+            n_estimators: 300
+            is_unbalance: true
+            objective: binary
+            metric: average_precision
+            min_child_samples: 20
+            subsample: 0.8
+            colsample_bytree: 0.8
+          - run_name: lgbm-l63-lr05-n500-spw
+            num_leaves: 63
+            learning_rate: 0.05
+            n_estimators: 500
+            is_unbalance: false
+            objective: binary
+            metric: average_precision
+            min_child_samples: 20
+            subsample: 0.8
+            colsample_bytree: 0.8
+          - run_name: lgbm-l127-lr01-n1000-isunb
+            num_leaves: 127
+            learning_rate: 0.01
+            n_estimators: 1000
+            is_unbalance: true
+            objective: binary
+            metric: average_precision
+            min_child_samples: 20
+            subsample: 0.8
+            colsample_bytree: 0.8
+    outs:
+    - path: models/runs.json
+      hash: md5
+      md5: 2850fc66e31446c1efc6ff8805221e1c
+      size: 830
+  evaluate:
+    cmd: python src/evaluate.py
+    deps:
+    - path: models/runs.json
+      hash: md5
+      md5: 2850fc66e31446c1efc6ff8805221e1c
+      size: 830
+    - path: src/evaluate.py
+      hash: md5
+      md5: 0a7d11dc905fdf25cd825998bb4a0cda
+      size: 4788
+    params:
+      params.yaml:
+        mlflow:
+          tracking_uri: sqlite:///mlflow.db
+    outs:
+    - path: metrics/metrics.json
+      hash: md5
+      md5: 3a755955187cab27dcc76e4d5eff8f68
+      size: 2450
+    - path: plots/pr_curve.csv
+      hash: md5
+      md5: 1eeec2ab9eb55b7daf1d663abe024859
+      size: 57845
+    - path: plots/roc_curve.csv
+      hash: md5
+      md5: ba94428701e53ee77f31738cb2985890
+      size: 52103

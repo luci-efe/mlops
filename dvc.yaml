@@ -1,0 +1,58 @@
+# dvc.yaml — DVC pipeline for credit-card fraud detection demo.
+# Run with: dvc repro
+#
+# Stage order: pull_raw → preprocess → train → evaluate
+
+stages:
+
+  pull_raw:
+    cmd: python src/data.py pull
+    deps:
+      - src/data.py
+    params:
+      - data.openml_dataset_id
+    outs:
+      - data/raw/creditcard.parquet
+
+  preprocess:
+    cmd: python src/data.py preprocess
+    deps:
+      - src/data.py
+      - data/raw/creditcard.parquet
+    params:
+      - preprocessing
+    outs:
+      - data/processed/X_train.parquet
+      - data/processed/X_test.parquet
+      - data/processed/y_train.parquet
+      - data/processed/y_test.parquet
+
+  train:
+    cmd: python src/train_all.py
+    deps:
+      - src/train.py
+      - src/train_all.py
+      - data/processed/X_train.parquet
+      - data/processed/X_test.parquet
+      - data/processed/y_train.parquet
+      - data/processed/y_test.parquet
+    params:
+      - models
+      - mlflow
+    outs:
+      - models/runs.json
+
+  evaluate:
+    cmd: python src/evaluate.py
+    deps:
+      - src/evaluate.py
+      - models/runs.json
+    params:
+      - mlflow
+    outs:
+      - metrics/metrics.json:
+          cache: false
+      - plots/roc_curve.csv:
+          cache: false
+      - plots/pr_curve.csv:
+          cache: false

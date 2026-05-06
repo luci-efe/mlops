@@ -1,0 +1,72 @@
+{
+  "logreg-baseline": {
+    "run_id": "102883910c63488a9c9eff58edfdb6c7",
+    "model": "logreg",
+    "pr_auc": 0.7061497419031952,
+    "roc_auc": 0.9704840873462497,
+    "best_threshold": 0.9999999063318491,
+    "f1_at_threshold": 0.8247422675412902,
+    "precision_at_threshold": 0.8333333333333334,
+    "recall_at_threshold": 0.8163265306122449
+  },
+  "xgb-d4-lr10-n300": {
+    "run_id": "5c6150a0357e4929a6e870c25e9f0f81",
+    "model": "xgb",
+    "pr_auc": 0.874150192988864,
+    "roc_auc": 0.9794267453745709,
+    "best_threshold": 0.9803568720817566,
+    "f1_at_threshold": 0.8839779000559201,
+    "precision_at_threshold": 0.963855421686747,
+    "recall_at_threshold": 0.8163265306122449
+  },
+  "xgb-d6-lr05-n500": {
+    "run_id": "1ed4f4f407e04cd8abbaa60d99e3d694",
+    "model": "xgb",
+    "pr_auc": 0.8818592029899736,
+    "roc_auc": 0.9788614869132797,
+    "best_threshold": 0.9274014830589294,
+    "f1_at_threshold": 0.8743169393932336,
+    "precision_at_threshold": 0.9411764705882353,
+    "recall_at_threshold": 0.8163265306122449
+  },
+  "xgb-d8-lr01-n1000": {
+    "run_id": "9a5c52634c6d44f18cf752b2ecf9aa57",
+    "model": "xgb",
+    "pr_auc": 0.872577554130589,
+    "roc_auc": 0.9825512788120313,
+    "best_threshold": 0.9823912978172302,
+    "f1_at_threshold": 0.8508287287852019,
+    "precision_at_threshold": 0.927710843373494,
+    "recall_at_threshold": 0.7857142857142857
+  },
+  "lgbm-l31-lr10-n300-isunb": {
+    "run_id": "40f9bb0b08274cad8f7c5fd0087b73e0",
+    "model": "lgbm",
+    "pr_auc": 0.03677989181160009,
+    "roc_auc": 0.9260639240924281,
+    "best_threshold": 1.0,
+    "f1_at_threshold": 0.07876867352317579,
+    "precision_at_threshold": 0.041212695405021316,
+    "recall_at_threshold": 0.8877551020408163
+  },
+  "lgbm-l63-lr05-n500-spw": {
+    "run_id": "a4aedf47a6c5461c91b0f40ecf199c97",
+    "model": "lgbm",
+    "pr_auc": 0.014644430731147203,
+    "roc_auc": 0.8894212686481457,
+    "best_threshold": 1.0,
+    "f1_at_threshold": 0.03261703756862728,
+    "precision_at_threshold": 0.016621040281579978,
+    "recall_at_threshold": 0.8673469387755102
+  },
+  "lgbm-l127-lr01-n1000-isunb": {
+    "run_id": "1375ee61f6dd43cea9ccfb0fbb56c179",
+    "model": "lgbm",
+    "pr_auc": 0.8783176221173259,
+    "roc_auc": 0.9807451434428582,
+    "best_threshold": 0.5973148292676099,
+    "f1_at_threshold": 0.8829787229051608,
+    "precision_at_threshold": 0.9222222222222223,
+    "recall_at_threshold": 0.8469387755102041
+  }
+}

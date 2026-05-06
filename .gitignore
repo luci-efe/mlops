@@ -1,0 +1,27 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+
+# DVC
+.dvc/cache/
+.dvc/tmp/
+
+# Data tracked by DVC, not git
+data/raw/*.parquet
+
+data/processed/*.parquet
+
+# MLflow local store
+mlruns/
+mlartifacts/
+mlflow.db
+
+# Models tracked by DVC
+models/*.pkl
+models/runs.json
+
+# Evidence captured during runs (committed selectively later)
+evidence/
+!evidence/.gitkeep
