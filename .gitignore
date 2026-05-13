@@ -33,3 +33,5 @@ deployment/node_modules/
 deployment/dist/
 deployment/.wrangler/
 deployment/.dev.vars
+.wrangler/
+evidence/m3/cartel_assets/

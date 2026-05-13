@@ -101,7 +101,7 @@ def main() -> None:
     pdf.ln(6)
     pdf.set_font("Main", "", 12)
     pdf.set_text_color(60, 60, 60)
-    pdf.cell(0, 8, "Eduardo García López  ·  Fernando Ramos Ríos", new_x="LMARGIN", new_y="NEXT", align="C")
+    pdf.cell(0, 8, "Eduardo García López  ·  Fernando Ramos", new_x="LMARGIN", new_y="NEXT", align="C")
     pdf.cell(0, 8, "ITESO — ISAA — Primavera 2026", new_x="LMARGIN", new_y="NEXT", align="C")
     pdf.ln(8)
     pdf.body(

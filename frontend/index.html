@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fraud Detector MLOps Demo</title>
+  <meta name="description" content="Demo profesional del detector de fraude con tarjeta de crédito desplegado en Cloudflare Workers y Containers." />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="hero">
+    <nav class="nav" aria-label="Navegación principal">
+      <div class="brand"><span class="brand-mark">ƒ</span><span>Fraud Detector</span></div>
+      <div class="nav-links">
+        <a href="#pipeline">Pipeline</a>
+        <a href="#demo">Demo API</a>
+        <a href="#metrics">Resultados</a>
+      </div>
+    </nav>
+
+    <section class="hero-grid">
+      <div class="hero-copy">
+        <p class="eyebrow">Proyecto final ISAA · MLOps reproducible</p>
+        <h1>Detección de fraude con una API de inferencia en el edge.</h1>
+        <p class="lead">
+          Un modelo XGBoost entrenado con DVC y MLflow, exportado a ONNX y desplegado en
+          Cloudflare Workers + Containers para demostrar inferencia pública, rápida y verificable.
+        </p>
+        <div class="hero-actions">
+          <a class="button primary" href="#demo">Probar el modelo</a>
+          <a class="button ghost" href="https://fraud-detector.eduardo-lalo1999.workers.dev/" target="_blank" rel="noreferrer">Ver API</a>
+        </div>
+      </div>
+
+      <aside class="status-card" aria-live="polite">
+        <div class="status-topline">
+          <span class="pulse" id="healthPulse"></span>
+          <span id="healthText">Verificando API…</span>
+        </div>
+        <div class="score-ring" id="scoreRing" style="--score: 0">
+          <span id="scoreValue">--</span>
+          <small>probabilidad</small>
+        </div>
+        <dl class="mini-metrics">
+          <div><dt>Modelo</dt><dd id="modelVersion">v1</dd></div>
+          <div><dt>Umbral</dt><dd id="thresholdValue">0.9274</dd></div>
+          <div><dt>Predicción</dt><dd id="predictionValue">—</dd></div>
+        </dl>
+      </aside>
+    </section>
+  </header>
+
+  <main>
+    <section class="section metric-strip" id="metrics" aria-label="Resultados principales">
+      <article><strong>0.8819</strong><span>PR-AUC del mejor modelo</span></article>
+      <article><strong>0.9789</strong><span>ROC-AUC</span></article>
+      <article><strong>100/100</strong><span>paridad API vs sklearn</span></article>
+      <article><strong>253 ms</strong><span>latencia mediana</span></article>
+    </section>
+
+    <section class="section split" id="pipeline">
+      <div>
+        <p class="eyebrow">Cómo funciona</p>
+        <h2>Del experimento al endpoint público</h2>
+        <p>
+          El proyecto ataca un caso extremo de desbalance de clases: menos de 0.2% de las transacciones
+          son fraude. Por eso se optimiza PR-AUC y se valida la paridad del modelo antes de exponerlo.
+        </p>
+      </div>
+      <div class="timeline">
+        <div><span>01</span><b>DVC</b><p>Versiona datos crudos/procesados y reproduce el pipeline.</p></div>
+        <div><span>02</span><b>MLflow</b><p>Registra 7 corridas, métricas, artefactos y alias fraud-detector@staging.</p></div>
+        <div><span>03</span><b>ONNX</b><p>Desacopla entrenamiento en Python de inferencia en contenedor.</p></div>
+        <div><span>04</span><b>Cloudflare</b><p>Worker + Container + Durable Object exponen POST /predict.</p></div>
+      </div>
+    </section>
+
+    <section class="section demo" id="demo">
+      <div class="demo-copy">
+        <p class="eyebrow">Demo interactiva</p>
+        <h2>Envía un vector de 29 features a la API</h2>
+        <p>
+          El modelo espera V1–V28 y Amount, como el dataset de fraude de tarjetas. Usa los ejemplos o pega tu propio arreglo JSON.
+        </p>
+        <div class="example-buttons">
+          <button data-sample="normal" type="button">Ejemplo normal</button>
+          <button data-sample="suspicious" type="button">Ejemplo sospechoso</button>
+          <button data-sample="blank" type="button">Limpiar</button>
+        </div>
+      </div>
+
+      <form class="predictor" id="predictForm">
+        <label for="featuresInput">Features JSON</label>
+        <textarea id="featuresInput" spellcheck="false" rows="8"></textarea>
+        <div class="form-row">
+          <button class="button primary" type="submit">Llamar POST /predict</button>
+          <span id="formStatus" role="status"></span>
+        </div>
+        <pre class="result" id="resultBox">La respuesta aparecerá aquí.</pre>
+      </form>
+    </section>
+
+    <section class="section api-contract">
+      <div>
+        <h2>Contrato de la API</h2>
+        <p>Endpoint desplegado: <a href="https://fraud-detector.eduardo-lalo1999.workers.dev/" target="_blank" rel="noreferrer">fraud-detector.eduardo-lalo1999.workers.dev</a></p>
+      </div>
+      <pre><code>POST /predict
+Content-Type: application/json
+
+{
+  "features": [29 numeric values]
+}
+
+{
+  "probability": 0.0000021,
+  "prediction": 0,
+  "threshold": 0.9274014830589294,
+  "model_version": "v1"
+}</code></pre>
+    </section>
+  </main>
+
+  <footer>
+    <span>Eduardo García López · Fernando Ramos</span>
+    <span>ITESO · Primavera 2026</span>
+  </footer>
+
+  <script src="./app.js" type="module"></script>
+</body>
+</html>

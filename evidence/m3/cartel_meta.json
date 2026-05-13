@@ -5,6 +5,6 @@
   "title": "Detector de fraude con tarjeta de crédito: pipeline MLOps reproducible con DVC, MLflow y despliegue en Cloudflare",
   "authors": [
     "Eduardo García López",
-    "Fernando Ramos Ríos"
+    "Fernando Ramos"
   ]
 }

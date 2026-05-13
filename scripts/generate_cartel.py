@@ -38,7 +38,7 @@ TITLE = (
 )
 
 AUTORES = (
-    "Eduardo García López y Fernando Ramos Ríos\n"
+    "Eduardo García López y Fernando Ramos\n"
     "ITESO — Integración de Servicios de Aprendizaje Automático (ISAA) — Primavera 2026"
 )
 
@@ -210,7 +210,7 @@ def main() -> None:
         "pdf": str(pdf_path.relative_to(ROOT)),
         "preview": str(preview.relative_to(ROOT)),
         "title": TITLE,
-        "authors": ["Eduardo García López", "Fernando Ramos Ríos"],
+        "authors": ["Eduardo García López", "Fernando Ramos"],
     }
     (EVIDENCE_DIR / "cartel_meta.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False))
     print("OK")
