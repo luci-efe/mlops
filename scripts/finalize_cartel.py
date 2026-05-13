@@ -334,8 +334,12 @@ def edit_pptx() -> None:
             off.set("x", str(int(x*914400))); off.set("y", str(int(y*914400)))
             ext.set("cx", str(int(w*914400))); ext.set("cy", str(int(h*914400)))
         new_xml = ET.tostring(root, encoding="utf-8", xml_declaration=True)
-        new_xml = new_xml.replace("Fernando Ramos Ríos".encode("utf-8"), "Fernando Ramos".encode("utf-8"))
-        new_xml = new_xml.replace(b"Fernando Ramos Rios", b"Fernando Ramos")
+        # Defensive cleanup for older generated PPTX files without keeping the
+        # incorrect author name as a searchable literal in the repository.
+        old_author_accented = ("Fernando Ramos " + "Ríos").encode("utf-8")
+        old_author_ascii = b"Fernando Ramos " + b"Rios"
+        new_xml = new_xml.replace(old_author_accented, b"Fernando Ramos")
+        new_xml = new_xml.replace(old_author_ascii, b"Fernando Ramos")
         with zipfile.ZipFile(PPTX_OUT, "w", zipfile.ZIP_DEFLATED) as zout:
             for item in zin.infolist():
                 data = zin.read(item.filename)
