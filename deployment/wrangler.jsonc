@@ -1,0 +1,25 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "fraud-detector",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-05-12",
+  "compatibility_flags": ["nodejs_compat"],
+  "account_id": "48f381bf59212dbd98d2b424ba4b9a04",
+  "observability": { "enabled": true },
+  "containers": [
+    {
+      "class_name": "FraudDetectorContainer",
+      "image": "./Dockerfile",
+      "instance_type": "basic",
+      "max_instances": 3
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      { "class_name": "FraudDetectorContainer", "name": "FRAUD_DETECTOR" }
+    ]
+  },
+  "migrations": [
+    { "new_sqlite_classes": ["FraudDetectorContainer"], "tag": "v1" }
+  ]
+}

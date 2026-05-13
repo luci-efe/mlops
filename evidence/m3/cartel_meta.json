@@ -1,0 +1,10 @@
+{
+  "pptx": "mlops/Cartel_ProyectoFinal_EduardoGarcia_FernandoRamos.pptx",
+  "pdf": "mlops/Cartel_ProyectoFinal_EduardoGarcia_FernandoRamos.pdf",
+  "preview": "mlops/evidence/m3/cartel_preview.png",
+  "title": "Detector de fraude con tarjeta de crédito: pipeline MLOps reproducible con DVC, MLflow y despliegue en Cloudflare",
+  "authors": [
+    "Eduardo García López",
+    "Fernando Ramos Ríos"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "worker_url": "https://fraud-detector.eduardo-lalo1999.workers.dev",
+  "model_alias": "fraud-detector@staging",
+  "n_rows": 100,
+  "n_positives_sampled": 20,
+  "tolerance": 0.0001,
+  "n_within_tolerance": 100,
+  "max_abs_diff": 5.9329579471523175e-08,
+  "mean_abs_diff": 2.6482306054731454e-08,
+  "class_agreement": 100,
+  "threshold": 0.9274014830589294,
+  "latency_ms": {
+    "p50": 252.87790850006786,
+    "p95": 613.1240572501838,
+    "mean": 648.7264037400157
+  }
+}

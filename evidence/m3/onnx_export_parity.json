@@ -1,0 +1,17 @@
+{
+  "model_alias": "fraud-detector@staging",
+  "model_version": 1,
+  "onnx_path": "models/fraud-detector-v1.onnx",
+  "onnx_size_kb": 850.6,
+  "onnx_input_name": "input",
+  "onnx_output_names": [
+    "label",
+    "probabilities"
+  ],
+  "n_test_rows": 200,
+  "tolerance": 0.0001,
+  "n_within_tolerance": 200,
+  "max_abs_diff": 7.945345714688301e-08,
+  "mean_abs_diff": 3.0091594993564286e-08,
+  "best_threshold": 0.9274014830589294
+}

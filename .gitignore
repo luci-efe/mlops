@@ -25,4 +25,11 @@ models/runs.json
 # Evidence captured during runs (CLI logs gitignored, screenshots committed)
 evidence/*
 !evidence/screenshots/
+!evidence/m3/
 !evidence/.gitkeep
+
+# Worker deployment
+deployment/node_modules/
+deployment/dist/
+deployment/.wrangler/
+deployment/.dev.vars
