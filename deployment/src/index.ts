@@ -6,7 +6,7 @@ export interface Env {
 
 export class FraudDetectorContainer extends Container<Env> {
   defaultPort = 8080;
-  sleepAfter = "5m";
+  sleepAfter = "1h";
 
   override onError(error: unknown) {
     console.log("Container error:", error);

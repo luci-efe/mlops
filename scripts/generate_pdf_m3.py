@@ -17,7 +17,7 @@ from fpdf import FPDF
 ROOT = Path(__file__).resolve().parents[2]
 MLOPS = ROOT / "mlops"
 EVID_M3 = MLOPS / "evidence" / "m3"
-OUT_PDF = ROOT / "Suplemento_M3_Cloudflare_Despliegue_EduardoGarcia_FernandoRamos.pdf"
+OUT_PDF = MLOPS / "Suplemento_M3_Cloudflare_Despliegue_EduardoGarcia_FernandoRamos.pdf"
 
 FONT_R = "/usr/share/fonts/Adwaita/AdwaitaSans-Regular.ttf"
 FONT_I = "/usr/share/fonts/Adwaita/AdwaitaSans-Italic.ttf"
@@ -215,6 +215,13 @@ def main() -> None:
 
     pdf.add_page()
     pdf.h1("5. Reproducir desde cero")
+    pdf.body(
+        "Nota importante: el `account_id` de Cloudflare en `deployment/wrangler.jsonc` "
+        "está fijado al de los autores. Para reproducir desde otra cuenta, reemplazar "
+        "ese valor y volver a desplegar. Además, la primera petición al endpoint tras "
+        "una hora de inactividad puede tardar ~30 s (arranque en frío del contenedor); "
+        "peticiones subsecuentes responden en menos de 500 ms."
+    )
     pdf.code(
         "# Pre-requisitos: Python 3.11 venv, Docker corriendo, wrangler 4.56+\n"
         "cd mlops\n"
